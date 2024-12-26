@@ -533,11 +533,20 @@ def plot_classification_results(data, title="Stock Price with Classification Res
 
 
 def plot_results(y_true, y_pred, probabilities=None, pca=None, feature_names=None):
-    # Create a figure with specific size
-    plt.figure(figsize=(15, 10))
+    """
+    Create comprehensive visualization of model results including confusion matrix,
+    ROC curves, and PCA feature importance for all three principal components.
 
-    # Plot 1: Confusion Matrix
-    plt.subplot(2, 2, 1)
+    Parameters:
+        y_true: Array of true labels
+        y_pred: Array of predicted labels
+        probabilities: Array of prediction probabilities for each class
+        pca: Fitted PCA object
+        feature_names: List of feature names corresponding to the input data
+    """
+    plt.figure(figsize=(20, 15))
+
+    plt.subplot(3, 2, 1)
     cm = confusion_matrix(y_true, y_pred)
     labels = ['-1', '0', '1']
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
@@ -546,9 +555,8 @@ def plot_results(y_true, y_pred, probabilities=None, pca=None, feature_names=Non
     plt.xlabel('Predicted')
     plt.ylabel('True')
 
-    # Plot 2: ROC Curves
     if probabilities is not None:
-        plt.subplot(2, 2, 2)
+        plt.subplot(3, 2, 2)
         colors = ['blue', 'green', 'red']
         class_labels = ['Negative', 'Neutral', 'Positive']
 
@@ -565,29 +573,38 @@ def plot_results(y_true, y_pred, probabilities=None, pca=None, feature_names=Non
         plt.title('ROC Curves (One-vs-Rest)')
         plt.legend()
 
-    # Plot 3: Feature Importance
     if pca is not None and feature_names is not None:
-        plt.subplot(2, 2, 3)
-        importance = np.abs(pca.components_[0])
-        valid_importance = importance[:len(feature_names)]
+        for i in range(3):
+            plt.subplot(3, 2, i + 3)
+            importance = np.abs(pca.components_[i])
+            valid_importance = importance[:len(feature_names)]
 
-        plt.bar(feature_names, valid_importance)
-        plt.xticks(rotation=45, ha='right')
-        plt.title('Feature Importance (First PCA Component)')
+            bars = plt.bar(feature_names, valid_importance)
+            plt.xticks(rotation=45, ha='right')
+            plt.title(f'Feature Importance (PCA Component {i + 1})')
 
-    # Plot 4: Explained Variance
-    if pca is not None:
-        plt.subplot(2, 2, 4)
+            for bar in bars:
+                height = bar.get_height()
+                plt.text(bar.get_x() + bar.get_width() / 2., height,
+                         f'{height:.3f}',
+                         ha='center', va='bottom')
+
+        # Plot 6: Explained Variance
+        plt.subplot(3, 2, 6)
         explained_variance = np.cumsum(pca.explained_variance_ratio_)
-        plt.plot(range(1, len(explained_variance) + 1), explained_variance, marker='o')
+        plt.plot(range(1, len(explained_variance) + 1), explained_variance,
+                 marker='o', linestyle='-', linewidth=2, markersize=8)
         plt.xlabel('Number of Components')
         plt.ylabel('Cumulative Explained Variance Ratio')
         plt.title('PCA Explained Variance Ratio')
         plt.grid(True)
 
+        for i, var in enumerate(explained_variance):
+            plt.text(i + 1, var + 0.02, f'{var:.1%}',
+                     ha='center', va='bottom')
+
     plt.tight_layout()
     plt.show()
-
 
 def visualize_stock_with_classification(stock_data, cluster_labels):
     stock_data['Date'] = pd.to_datetime(stock_data['Date'])
