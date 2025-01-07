@@ -1,5 +1,5 @@
 # STOCK-market-predictor
-# goude
+# guide
 
 ## Core Data Functions
 
